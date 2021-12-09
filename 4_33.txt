@@ -1,0 +1,497 @@
+.486
+.model flat, stdcall
+
+option casemap : none
+
+include windows.inc
+include kernel32.inc 
+include user32.inc 
+include masm32.inc
+includelib kernel32.lib 
+includelib user32.lib 
+includelib masm32.lib
+
+.data 
+result           	db "(min(max(x%10,5),max(y%10,5))/ min(x%4,y%4) = "           ; z=min(max(x%10,5),max(y%10,5))/ min(x%4,y%4)
+newline          	db 10
+enterX           	db "Enter x: "
+enterY           	db "Enter y: "
+x 		 	dd 0
+y          	 	dd 0    
+buf 		 	db 0   
+first 			dd 0           ;max(x%10,5)
+second 		dd 0           ;max(y%10,5)
+third 			dd 0           ;min(max(x%10,5),max(y%10,5))
+fourth 		dd 0           ;min(x%4,y%4)
+
+.data?
+inputHandle    	dd ?
+outputHandle   	dd ?
+noc            	dd ?
+buffer 	       	db ?                                                                 	
+
+.code      
+cout PROC msg:dword, chars:dword 
+	push NULL              
+	push offset noc
+	push chars                 
+	push msg
+	push outputHandle      
+	call WriteConsole
+	ret
+cout ENDP     
+
+cin PROC msg:dword
+	push NULL
+	push offset noc
+	push 100
+	push msg
+	push inputHandle
+	call ReadConsole 
+	ret
+cin ENDP  
+
+min PROC xx:dword, yy:dword
+	mov EAX, xx
+	mov EBX, yy
+	cmp EBX, EAX       
+	jna yyy
+	
+	xxx:
+	mov EAX, xx
+	jmp finish
+	        		
+	yyy:  
+	mov EAX, yy 
+	
+	finish:
+	ret
+min ENDP
+
+max PROC xx:dword, yy:dword
+	mov EAX, xx
+	mov EBX, yy
+	cmp EAX, EBX
+	jna yyy
+	
+	xxx:
+	mov EAX, xx
+	jmp finish
+	        		
+	yyy:  
+	mov EAX, yy 
+	
+	finish:
+	ret
+max ENDP
+
+main:
+;-----------------------------------------------------------------------------------------------------;
+push STD_INPUT_HANDLE 
+call GetStdHandle
+mov inputHandle, EAX
+
+push STD_OUTPUT_HANDLE
+call GetStdHandle
+mov outputHandle, EAX    
+
+
+;-----------------------------------------------------------------------------------------------------;
+        ;enter x
+	push 9
+        push offset enterX
+        call cout
+        
+        push offset buffer
+        call cin
+        
+        mov EDX, offset buffer
+        mov EAX, noc
+        mov byte ptr [ EAX + EDX - 2], 0
+        
+        push offset buffer
+        call atodw  
+        
+        mov x, EAX
+  
+        
+        ;enter y
+     	push 9
+        push offset enterY
+        call cout
+        
+        push offset buffer
+        call cin
+        
+        mov EDX, offset buffer
+        mov EAX, noc
+        mov byte ptr [ EAX + EDX - 2], 0
+        
+        push offset buffer
+        call atodw  
+        
+        mov y, EAX    
+        
+        ;-----------------
+	
+	;; min(max(x%10,5),max(y%10,5))/ min(x%4,y%4)  
+	;  
+	    
+				 
+	 ;max(y%10,5)			 			                               
+	mov EAX, y
+
+	mov EDX, 0                 
+	mov EBX, 10
+	div EBX
+	mov ECX, EDX    ;y%10
+	mov EBX, 5       ;5
+	
+	push ECX
+	push EBX
+	call max    
+	mov second, EAX 
+	
+	;max(x%10,5
+	
+	mov ECX, EAX           ;max(y%10,5) 
+	
+	mov EAX, x
+
+	mov EDX, 0                 
+	mov EBX, 10
+	div EBX
+	mov ECX, EDX    ;x%10
+	mov EBX, 5       ;5
+	
+	push ECX
+	push EBX
+	call max             
+	mov first, EAX
+	
+	;third       min..
+	mov ECX, second
+	
+	push ECX      ;ecx= max(y%10,5)
+	push EAX      ;eax=   max(x%10,5)
+	call min
+	
+	mov third, EAX
+	
+	;fourth    min(x%4,y%4)
+	mov EAX, x
+
+
+	mov EDX, 0                 
+	mov EBX, 4
+	div EBX
+	mov ECX, EDX    ;x%4
+	
+	mov EAX, y
+
+	mov EDX, 0                 
+	mov EBX, 4
+	div EBX
+	
+	push ECX      ;ecx= max(y%10,5)
+	push EDX      ;eax=   max(x%10,5)
+	call min       
+	mov fourth, EAX   
+	
+	;third / fourth
+	mov fourth, EAX
+	mov EAX, third
+	mov EDX, 0
+	div EBX    
+	
+	     			
+        ;----------------- 
+        
+        
+        push offset buffer 
+        push EAX
+        call dwtoa      
+             
+        push 46
+        push offset result
+        call cout           
+        
+        push offset buffer
+        call lstrlen
+        
+        push EAX
+        push offset buffer
+        call cout
+        
+;-----------------------------------------------------------------------------------------------------;
+;END
+
+final:
+
+push NULL
+push offset noc
+push 1
+push offset buffer
+push inputHandle
+call ReadConsole
+
+push 0
+call ExitProcess
+
+end main
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+my
+
+
+
+.486
+.model flat, stdcall
+
+option casemap : none
+
+include windows.inc
+include kernel32.inc 
+include user32.inc 
+include masm32.inc
+includelib kernel32.lib 
+includelib user32.lib 
+includelib masm32.lib
+
+.data 
+result           	db "min(max(x^2,10),min(y^4,10))/min(x%y,y%x) = "           ; z=min(max(x^2,10),min(y^4,10))/ min(x%y,y%x)
+newline          	db 10
+enterX           	db "Enter x: "
+enterY           	db "Enter y: "
+x 		 	dd 0
+y          	 	dd 0    
+buf 		 	db 0   
+first 			dd 0           ;max(x%10,5)
+second 		dd 0           ;max(y%10,5)
+third 			dd 0           ;min(max(x%10,5),max(y%10,5))
+fourth 		dd 0           ;min(x%4,y%4)
+
+.data?
+inputHandle    	dd ?
+outputHandle   	dd ?
+noc            	dd ?
+buffer 	       	db ?                                                                 	
+
+.code      
+cout PROC msg:dword, chars:dword 
+	push NULL              
+	push offset noc
+	push chars                 
+	push msg
+	push outputHandle      
+	call WriteConsole
+	ret
+cout ENDP     
+
+cin PROC msg:dword
+	push NULL
+	push offset noc
+	push 100
+	push msg
+	push inputHandle
+	call ReadConsole 
+	ret
+cin ENDP  
+
+min PROC xx:dword, yy:dword
+	mov EAX, xx
+	mov EBX, yy
+	cmp EBX, EAX       
+	jna yyy ;if<
+	
+	xxx:           ;if>
+	mov EAX, xx
+	jmp finish
+	        		
+	yyy:  
+	mov EAX, yy 
+	
+	finish:
+	ret
+min ENDP
+
+max PROC xx:dword, yy:dword
+	mov EAX, xx
+	mov EBX, yy
+	cmp EAX, EBX
+	jna yyy
+	
+	xxx:
+	mov EAX, xx
+	jmp finish
+	        		
+	yyy:  
+	mov EAX, yy 
+	
+	finish:
+	ret
+max ENDP
+
+main:
+;-----------------------------------------------------------------------------------------------------;
+push STD_INPUT_HANDLE 
+call GetStdHandle
+mov inputHandle, EAX
+
+push STD_OUTPUT_HANDLE
+call GetStdHandle
+mov outputHandle, EAX    
+
+
+;-----------------------------------------------------------------------------------------------------;
+        ;enter x
+	push 9
+        push offset enterX
+        call cout
+        
+        push offset buffer
+        call cin
+        
+        mov EDX, offset buffer
+        mov EAX, noc
+        mov byte ptr [ EAX + EDX - 2], 0
+        
+        push offset buffer
+        call atodw  
+        
+        mov x, EAX
+  
+        
+        ;enter y
+     	push 9
+        push offset enterY
+        call cout
+        
+        push offset buffer
+        call cin
+        
+        mov EDX, offset buffer
+        mov EAX, noc
+        mov byte ptr [ EAX + EDX - 2], 0
+        
+        push offset buffer
+        call atodw  
+        
+        mov y, EAX    
+        
+        ;-----------------
+	
+	;; z=min(max(x^2,10),min(y^4,10))/ min(x%y,y%x)
+	;  
+	    
+				 
+	   ;min(y^4,10)			 			                               
+	mov EAX, y
+        mul EAX
+        mul EAX           ;y^4
+	mov EBX, 10       ;10
+	
+	push EAX
+	push EBX
+	call min    
+	mov second, EAX ;max(y^4,10) 
+	
+	 
+	
+	mov ECX, EAX           
+	
+	mov EAX, x
+        mul EAX          ;x^2
+	mov EBX, 10       ;5
+	
+	push EAX
+	push EBX
+	call max             
+	mov first, EAX
+	
+        	;third       min..
+	mov ECX, second
+	
+	push ECX      ;ecx=  max(y^4,10)      
+	
+	push EAX      ;eax=   max(x^2,10)
+	call min
+	
+	mov third, EAX
+	
+	;fourth     min(x%y,y%x)
+	mov EAX, x
+
+
+	mov EDX, 0                 
+	mov EBX, y  
+	div EBX
+        mov ECX,EDX ;X%Y
+	
+	mov EAX, y   
+
+	mov EDX, 0                 
+	mov EBX, x
+	div EBX      ;Y%X
+	
+	push EDX      ;ecx= min(y^4,10))
+	push ECX      ;eax=  max(x^2,10)
+	call min       
+	mov fourth, EAX   
+	
+	;third / fourth
+	mov  EBX ,fourth
+	mov EAX, third
+	mov EDX, 0
+	div EBX  
+	
+	     			
+        ;----------------- 
+        
+        
+        push offset buffer 
+        push EAX
+        call dwtoa      
+             
+        push 44
+        push offset result
+        call cout           
+        
+        push offset buffer
+        call lstrlen
+        
+        push EAX
+        push offset buffer
+        call cout
+        
+;-----------------------------------------------------------------------------------------------------;
+;END
+
+final:
+
+push NULL
+push offset noc
+push 1
+push offset buffer
+push inputHandle
+call ReadConsole
+
+push 0
+call ExitProcess
+
+end main
